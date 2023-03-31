@@ -10,14 +10,14 @@ import { ReactQueryDevtools } from 'react-query/devtools'
 const queryClient = new QueryClient()
 const root = ReactDOM.createRoot(document.getElementById('root') as HTMLElement)
 root.render(
-  <React.StrictMode>
+  // <React.StrictMode>
+  <BrowserRouter>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter>
-        <App />
-        <ReactQueryDevtools initialIsOpen={false} />
-      </BrowserRouter>
+      <App />
+      <ReactQueryDevtools initialIsOpen={false} />
     </QueryClientProvider>
-  </React.StrictMode>
+  </BrowserRouter>
+  // </React.StrictMode>
 )
 
 // If you want to start measuring performance in your app, pass a function

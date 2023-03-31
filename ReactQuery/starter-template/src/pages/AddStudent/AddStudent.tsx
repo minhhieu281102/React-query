@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query'
 import { addStudent } from 'apis/students.api'
 import { Student } from 'types/students.type'
 import { useState } from 'react'
+import { QueryClientProvider } from 'react-query'
 
 type FormStateType = Omit<Student, 'id'>
 const initialFormState: FormStateType = {
@@ -31,7 +32,6 @@ export default function AddStudent() {
 
   const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
     event.preventDefault()
-
     mutate(formState)
   }
   return (
