@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom'
 import { getStudents } from 'apis/students.api'
 import { Students as StudentsType } from 'types/students.type'
 import { useQueryString } from 'utils/util'
-import { useQuery } from 'react-query'
+import { useQuery } from '@tanstack/react-query'
 import classNames from 'classnames'
 
 export default function Students() {
