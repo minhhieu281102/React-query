@@ -1,10 +1,10 @@
-import { Fragment, useEffect, useState } from 'react'
+import { Fragment } from 'react'
 import { Link } from 'react-router-dom'
-import { getStudents } from 'apis/students.api'
-import { Students as StudentsType } from 'types/students.type'
+import { deleteStudent, getStudent, getStudents } from 'apis/students.api'
 import { useQueryString } from 'utils/util'
-import { useQuery } from '@tanstack/react-query'
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import classNames from 'classnames'
+import { toast } from 'react-toastify'
 
 export default function Students() {
   // const [students, setStudents] = useState<StudentsType>([])
@@ -20,18 +20,36 @@ export default function Students() {
   //     })
   // }, [])
   const LIMIT = 10
-
+  const queryClient = useQueryClient()
   const queryString: { page?: string } = useQueryString()
   const page = Number(queryString.page) || 1
 
-  const { data, isLoading } = useQuery({
+  const studentQuery = useQuery({
     queryKey: ['students', page],
     queryFn: () => getStudents(page, LIMIT),
     keepPreviousData: true
   })
 
-  const totalStudentsCount = Number(data?.headers['x-total-count'] || 0)
+  const deleteStudentMutation = useMutation({
+    mutationFn: (id: string | number) => deleteStudent(id),
+    onSuccess: (_, id) => {
+      toast.success(`xoa thanh cong student voi id la ${id}`)
+      queryClient.invalidateQueries({ queryKey: ['students', page], exact: true })
+    }
+  })
+
+  const totalStudentsCount = Number(studentQuery.data?.headers['x-total-count'] || 0)
   const totalPage = Math.ceil(totalStudentsCount / LIMIT)
+
+  const handleDelete = (id: number) => {
+    deleteStudentMutation.mutate(id)
+  }
+
+  const handlePrefetchStudent = (id: number) => {
+    queryClient.prefetchQuery(['student', String(id)], {
+      queryFn: () => getStudent(id)
+    })
+  }
 
   return (
     <div>
@@ -45,7 +63,7 @@ export default function Students() {
           Add Student
         </Link>
       </div>
-      {isLoading && (
+      {studentQuery.isLoading && (
         <div role='status' className='mt-6 animate-pulse'>
           <div className='mb-4 h-4  rounded bg-gray-200 dark:bg-gray-700' />
           <div className='mb-2.5 h-10  rounded bg-gray-200 dark:bg-gray-700' />
@@ -63,7 +81,7 @@ export default function Students() {
           <span className='sr-only'>Loading...</span>
         </div>
       )}
-      {!isLoading && (
+      {!studentQuery.isLoading && (
         <Fragment>
           <div className='relative mt-6 overflow-x-auto shadow-md sm:rounded-lg'>
             <table className='w-full text-left text-sm text-gray-500 dark:text-gray-400'>
@@ -87,8 +105,9 @@ export default function Students() {
                 </tr>
               </thead>
               <tbody>
-                {data?.data.map((student) => (
+                {studentQuery.data?.data.map((student) => (
                   <tr
+                    onMouseEnter={() => handlePrefetchStudent(student.id)}
                     key={student.id}
                     className='border-b bg-white hover:bg-gray-50 dark:border-gray-700 dark:bg-gray-800 dark:hover:bg-gray-600'
                   >
@@ -102,12 +121,17 @@ export default function Students() {
                     <td className='py-4 px-6'>{student.email}</td>
                     <td className='py-4 px-6 text-right'>
                       <Link
-                        to='/students/1'
+                        to={`/students/${student.id}`}
                         className='mr-5 font-medium text-blue-600 hover:underline dark:text-blue-500'
                       >
                         Edit
                       </Link>
-                      <button className='font-medium text-red-600 dark:text-red-500'>Delete</button>
+                      <button
+                        className='font-medium text-red-600 dark:text-red-500'
+                        onClick={() => handleDelete(student.id)}
+                      >
+                        Delete
+                      </button>
                     </td>
                   </tr>
                 ))}
